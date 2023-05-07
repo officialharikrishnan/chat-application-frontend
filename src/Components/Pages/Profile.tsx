@@ -17,34 +17,32 @@ import {insert} from "../../utils/userSlice";
 import {useDispatch} from 'react-redux'
 import { socketio } from "../../service/socket";
 import { Socket } from "socket.io-client";
-import Badge from '@mui/material/Badge';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 interface user {
   name: String;
 }
 interface allUsers {
   name: string;
   _id: string;
+  noti?:boolean
 }
-interface notif {
-  count:number
-  id:string
-}
+
+
 function Profile() {
   const dispatch = useDispatch()
   const [userData, setUserData] = useState({} as user);
   const [allUsers, setAllUsers] = useState([] as allUsers[]);
   const [usersStatus, setUsersStatus] = useState(false);
   const [socket, setSocket] = useState<Socket>();
-  const [notification,setNotification]=useState({} as notif)
+  const [notificationUser,setNotificationUser]=useState('')
   const navigate = useNavigate()
   const userId = useParams();
-  
-//   console.log("userid>>>>>>>", userId);
   useEffect(() => {
     axios
       .get(`http://localhost:8001/get-profile/${userId.id}`)
       .then((user) => {
-        // console.log(user);
         setUserData(user.data);
       })
       .catch((err) => {
@@ -53,32 +51,47 @@ function Profile() {
       socketInit(userId.id)
     axios.get(`http://localhost:8001/get-all-users/${userId.id}`).then((response) => {
       if (response.data.length !== 0) {
-        setAllUsers(response.data);
+        let alluser=[...response.data]
+        alluser.map((user)=>{
+          user.noti = false
+        })
+        setAllUsers(alluser);
         setUsersStatus(true); 
-    
       }
     });
     setSocket(socketio)
   }, [userId.id]);
-  useEffect(()=>{
-    let msg=0
+
     socket?.on("getMessages", (data: any) => { 
-      msg++
-      setNotification({count:msg,id:data.user})
-    
-  });
-  },[socket])
+      axios
+      .get(`http://localhost:8001/get-profile/${data.user}`)
+      .then((user) => {
+        setNotificationUser(user.data.name);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+      
+      
+      
+    });
+    useEffect(()=>{
+      if(notificationUser){
+        toast(`New message from ${notificationUser}`, { type: 'success' });
+      }
+    },[notificationUser])
   const redirectToChat = (id:string,name:string) => {
     let sender=userId.id
-    let receiver=id
-    dispatch(insert(name))
+    let receiver=id 
+    dispatch(insert(name)) 
     let data=JSON.stringify({sender,receiver})
         navigate(`/chat/${data}`)
   }
-  console.log(notification);
-  
+ 
+
   return (
     <Box>
+      <ToastContainer />
       <Box sx={{ width: 1, height: "50vh", bgcolor: green[400] }}>
         <Container>
           <Grid xs={12} container alignItems="center" justifyContent="center">
@@ -113,18 +126,14 @@ function Profile() {
                   <ListItem
                   sx={{width:'70%',mb:2}}
                     // key={value}
-                    secondaryAction={notification.id === user._id ?
-                     <Badge badgeContent={notification.count} color="success" >
-
-                      <IconButton edge="end" onClick={()=>redirectToChat(user._id,user.name)} aria-label="comments">
-                        <Comment />
-                        
-                      </IconButton>
-                     </Badge>
-                     :
+                    secondaryAction={
+                      
+                     
                      <IconButton edge="end" onClick={()=>redirectToChat(user._id,user.name)} aria-label="comments">
-                       <Comment />
-                     </IconButton>
+                     <Comment />
+                     
+                   </IconButton>
+                     
 
                     }
                     disablePadding
@@ -147,6 +156,7 @@ function Profile() {
           </Container>
         )}
       </Box>
+
     </Box>
   );
 }

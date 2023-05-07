@@ -17,13 +17,20 @@
     "@types/react": "^18.2.5",
     "@types/react-dom": "^18.2.3",
     "@types/socket.io-client": "^3.0.0",
+    "aes256": "^1.1.0",
     "axios": "^1.4.0",
+    "crypto-js": "^4.1.1",
     "firebase": "^9.21.0",
+    "js-crypto-rsa": "^1.0.4",
+    "jsencrypt": "^3.3.2",
+    "randomstring": "^1.2.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-notifications": "^1.7.4",
     "react-redux": "^8.0.5",
     "react-router-dom": "^6.11.1",
     "react-scripts": "5.0.1",
+    "react-toastify": "^9.1.2",
     "socket.io-client": "^4.6.1",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
@@ -55,7 +62,9 @@
   "devDependencies": {
     "@babel/core": "^7.21.8",
     "@babel/preset-env": "^7.21.5",
+    "@types/crypto-js": "^4.1.1",
     "@types/firebase": "^3.2.1",
+    "@types/randomstring": "^1.1.8",
     "babel-loader": "^9.1.2"
   }
 }

@@ -11,6 +11,8 @@ import Signup from './Components/Pages/Signup';
 import Profile from './Components/Pages/Profile';
 import { Provider } from 'react-redux';
 import store from './utils/store';
+import { testEnc } from './utils/encrypt';
+
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -18,6 +20,8 @@ declare global {
     }
   }
 }
+testEnc()
+
 const router = createBrowserRouter([
   {
     path:'/',

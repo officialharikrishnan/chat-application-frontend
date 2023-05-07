@@ -3,8 +3,11 @@ import "./Chat.css";
 import { Socket } from "socket.io-client";
 import { socketio } from "../../service/socket";
 import { useParams } from "react-router-dom";
-import {useSelector} from 'react-redux'
+import { useSelector} from 'react-redux'
 import axios from "axios";
+import * as randomstring from 'randomstring';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 function Chat() {
   
   interface Store {
@@ -16,6 +19,17 @@ function Chat() {
     }
     // other properties of store...
   }
+  interface Store {
+    notification?:{
+      user?:{
+        data?:{
+          id:string
+          status:boolean
+        }
+      }
+    }
+    }
+    
   const data=useParams()
   const currUser = useSelector((store:Store) => store?.user?.value) 
   const [socket, setSocket] = useState<Socket>();
@@ -23,11 +37,11 @@ function Chat() {
   const [sender,setSender]=useState('')
   const [input,setInput]=useState('')
   const [allMessage,setAllMessage]=useState([])
-  const [emit,setEmit]=useState(false)
+  const [emit,setEmit]=useState('')
+  const [notificationUser,setNotificationUser]=useState('')
   useEffect(() => {
     setSocket(socketio);
-    setEmit(!emit)
-
+    setEmit(randomstring.generate())
   }, []);
   useEffect(()=>{
     
@@ -35,30 +49,43 @@ function Chat() {
       let decode = JSON.parse(data.id)
       setSender(decode.sender)
       setRecUserId(decode.receiver)
-      setEmit(!emit)
+      setEmit(randomstring.generate())
     }
   },[socket,data,recUser,sender])
 
   socket?.on("getMessages", (data: any) => {
-    console.log("one message>>",data); 
-    setEmit(!emit)
-  });
-
-  useEffect(()=>{
-
-    axios.post('http://localhost:8000/get-chat',{user1:sender,user2:recUser}).then((chat)=>{
-      setAllMessage(chat.data.data)
-   
+    setEmit(randomstring.generate())
+    if(data.user !== recUser){
+      axios
+      .get(`http://localhost:8001/get-profile/${data.user}`)
+      .then((user) => {
+        // console.log(user);
+        setNotificationUser(user.data.name);
       })
-  },[emit,recUser,sender])
-
-
+      .catch((err) => {
+        console.log(err);
+      });
+      console.log("not this user");
+      
+    }
+  });
+ 
+  useEffect(()=>{
+    axios.post('http://localhost:8000/get-chat',{user1:sender,user2:recUser})
+    .then((chat)=>{
+      setAllMessage(chat.data.data)
+    })
+  },[emit])
+  useEffect(()=>{
+    if(notificationUser){
+      toast(`New message from ${notificationUser}`, { type: 'success' });
+    }
+  },[notificationUser])
+  console.log(emit);
   
    
   function sendMessage(e: any) {
-    console.log("send called",socket);
     e.preventDefault();
-    console.log("called");
     const messageData = {
       user: sender,
       time:
@@ -69,9 +96,11 @@ function Chat() {
     }; 
     socket?.emit("send", { sender: sender, receiver:recUser, data:messageData });
     setInput('')
-    setEmit(!emit)
-
+    statechange()
    
+  }
+  const statechange = () =>{
+     setEmit(randomstring.generate())
   }
 
   return (
@@ -107,6 +136,7 @@ function Chat() {
             type="text"
             className="msger-input"
             onChange={(e) => {
+              e.preventDefault()
               setInput(e.target.value)
             }}
             placeholder="Enter your message..."
@@ -122,6 +152,7 @@ function Chat() {
           </button>
         </form>
       </section>
+      <ToastContainer/>
     </div>
   );
 }
